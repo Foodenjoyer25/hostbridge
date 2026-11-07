@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HostBridge</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%233b82f6'/><path d='M7 20c4-8 14-8 18 0' stroke='white' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M7 20v4M25 20v4M16 14v10' stroke='white' stroke-width='3' stroke-linecap='round'/></svg>">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Login -->
+  <section id="login" class="login hidden">
+    <form id="login-form" class="card login-card">
+      <h1>HostBridge</h1>
+      <p class="muted">Nginx Proxy Manager + AdGuard Home</p>
+      <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" required autofocus>
+      <button class="btn primary" type="submit">Sign in</button>
+      <p id="login-error" class="error-text"></p>
+    </form>
+  </section>
+
+  <!-- App -->
+  <div id="app" class="hidden">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo"></span>
+        <div><strong>HostBridge</strong><small class="muted">Proxy hosts &amp; DNS in one place</small></div>
+      </div>
+      <div id="status-pills" class="pills"></div>
+      <div class="top-actions">
+        <button class="btn ghost" id="btn-refresh" title="Refresh">↻</button>
+        <button class="btn ghost hidden" id="btn-logout">Sign out</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="toolbar">
+        <input id="search" type="search" placeholder="Search domains, targets…">
+        <div class="seg" id="filter">
+          <button data-f="all" class="active">All</button>
+          <button data-f="issues">Issues</button>
+          <button data-f="dns">DNS only</button>
+        </div>
+        <button class="btn primary" id="btn-add">+ Add host</button>
+      </div>
+
+      <div id="banner" class="banner hidden"></div>
+
+      <div class="card table-wrap">
+        <table>
+          <thead>
+            <tr><th>Domain(s)</th><th>Forwards to</th><th>SSL</th><th>DNS</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody id="rows"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Host editor -->
+  <dialog id="host-dialog">
+    <form id="host-form" method="dialog">
+      <h2 id="host-title">Add host</h2>
+
+      <label>Domain names <small class="muted">one per line or comma-separated<span id="suffix-hint"></span></small>
+        <textarea name="domains" rows="2" required placeholder="jellyfin.home.lan"></textarea>
+      </label>
+
+      <div class="grid3">
+        <label>Scheme
+          <select name="forward_scheme"><option>http</option><option>https</option></select>
+        </label>
+        <label>Forward host / IP
+          <input name="forward_host" required placeholder="192.168.1.20">
+        </label>
+        <label>Port
+          <input name="forward_port" type="number" min="1" max="65535" required placeholder="8096">
+        </label>
+      </div>
+
+      <fieldset>
+        <legend>DNS (AdGuard Home)</legend>
+        <label class="check"><input type="checkbox" name="manage_dns" checked> Create / update DNS rewrites on all AdGuard instances</label>
+        <label>Rewrite answer <small class="muted">IP of your Nginx Proxy Manager</small>
+          <input name="dns_answer" placeholder="192.168.1.10">
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>SSL</legend>
+        <label>Certificate
+          <select name="certificate_id"></select>
+        </label>
+        <label id="le-email-wrap" class="hidden">Let's Encrypt email
+          <input name="letsencrypt_email" type="email">
+        </label>
+        <div class="checks">
+          <label class="check"><input type="checkbox" name="ssl_forced"> Force SSL</label>
+          <label class="check"><input type="checkbox" name="http2_support"> HTTP/2</label>
+          <label class="check"><input type="checkbox" name="hsts_enabled"> HSTS</label>
+          <label class="check"><input type="checkbox" name="hsts_subdomains"> HSTS subdomains</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Options</legend>
+        <div class="checks">
+          <label class="check"><input type="checkbox" name="allow_websocket_upgrade" checked> Websockets</label>
+          <label class="check"><input type="checkbox" name="block_exploits" checked> Block common exploits</label>
+          <label class="check"><input type="checkbox" name="caching_enabled"> Cache assets</label>
+        </div>
+        <label>Access list
+          <select name="access_list_id"></select>
+        </label>
+        <details>
+          <summary>Advanced nginx config</summary>
+          <textarea name="advanced_config" rows="4" class="mono" placeholder="# custom nginx directives"></textarea>
+        </details>
+      </fieldset>
+
+      <p id="form-error" class="error-text"></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn ghost" id="host-cancel">Cancel</button>
+        <button type="submit" class="btn primary" id="host-save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Confirm delete -->
+  <dialog id="confirm-dialog">
+    <form method="dialog">
+      <h2 id="confirm-title">Delete?</h2>
+      <p id="confirm-text"></p>
+      <label class="check" id="confirm-dns-wrap"><input type="checkbox" id="confirm-dns" checked> Also remove DNS rewrites</label>
+      <div class="dialog-actions">
+        <button value="cancel" class="btn ghost">Cancel</button>
+        <button value="ok" class="btn danger">Delete</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

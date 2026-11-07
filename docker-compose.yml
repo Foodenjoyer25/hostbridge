@@ -1,0 +1,16 @@
+services:
+  hostbridge:
+    build: .
+    image: hostbridge:latest
+    container_name: hostbridge
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-8080}:8080"
+    env_file: .env
+    # If NPM / AdGuard run in Docker on the same host, join their network so
+    # you can use container names (e.g. http://nginx-proxy-manager:81):
+    # networks: [proxy]
+
+# networks:
+#   proxy:
+#     external: true
